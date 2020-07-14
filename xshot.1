@@ -1,0 +1,85 @@
+.TH XSHOT 1 "July 2020" "version 0"
+.SH NAME
+xshot \- a simple screenshot utility for X
+.SH SYNOPSIS
+.B xshot
+.RB [ \-br ]
+.RB [ \-a | \-m [ a ]| \-s [ tf ]]
+.RB [ \-d
+.IR delay ]
+.RB [ \-\-tty ]
+.RB [ \-h ]
+.RI [ output.png ]
+.SH DESCRIPTION
+.B xshot
+is a simple screenshot utility for X. I wrote it to fix some strange problems 
+of
+.IR scrot (1)
+and add small useful functions like selecting a region with two clicks.
+.P
+Without options, the whole root window, which contains all monitors, is 
+captured.
+.P
+When
+.I output.png
+is absent, the image is printed to the standard output (if it is not a tty, see 
+the
+.B \-\-tty
+option).
+.SH OPTIONS
+.TP
+.B \-r
+make the screenshot based on the root window (crop it). It enables all 
+transparency effects, overlapping windows, etc. so that the final image is 
+precisely what the user sees. Note that without this option, window decorations 
+may appear transparent.
+.TP
+.B \-a
+capture the active window. Changes the behavior when
+.B \-m
+is present.
+.TP
+.B \-s
+select a region to capture. By default, it is the regular press-move-release 
+gesture.
+.TP
+.B \-t
+use two clicks to select a region. Implies the
+.B \-s
+option if it is absent.
+.TP
+.B \-m
+capture a single monitor. By default, it is identified by the mouse pointer 
+location. When combined with
+.BR \-a ,
+the corners of the active window are considered to locate the 
+monitor. If
+.B xshot
+fails to locate the monitor, it captures all of them.
+.TP
+.B \-f
+do
+.B not
+freeze the screen while selecting a region. Freezing pauses all compositors 
+that try to redraw the selection rectangle and hence break it (only with the
+.B \-s
+option).
+.TP
+.B \-b
+capture only client contents, exclude all borders and decorations.
+.TP
+.BI \-d " delay"
+wait for
+.I delay
+milliseconds right before the shot. Region selection, if any, is performed 
+before the pause, and the screen is never frozen during it.
+.TP
+.B \-\-tty
+do not suppress output when it is a tty.
+.TP
+.B \-h
+print a small help message.
+.SH AUTHOR
+Written by Kerim Guseynov.
+.P
+The project is located at https://github.com/ehhov/xshot.

@@ -1,0 +1,29 @@
+xshot - screenshot utility for X
+================================
+
+This program is based on a few projects:
+ - scrot (https://github.com/resurrecting-open-source-projects/scrot)
+ - xscreenshot (https://git.codemadness.org/xscreenshot/log.html)
+ - farbfeld (https://git.suckless.org/farbfeld/log.html)
+
+In fact, it is something like a stripped down to my personal needs 
+scrot with some additional functionality. It is slower, but has fewer 
+dependencies. It can
+ - capture all monitors,
+ - capture a single monitor
+    - identified by the pointer location,
+    - identified by the active window position,
+ - capture the current active window,
+ - select a region to capture
+    - select by dragging,
+    - select by two clicks,
+ - freeze the screen so that compositors don't override the selection 
+   rectangle and it does not disappear (of course you can unfreeze it),
+ - exclude window borders and decorations,
+ - capture windows as you see them (include transparency and so on),
+ - capture after a delay with millisecond precision.
+
+
+Requirements
+------------
+To build this program, Xlib and Xrandr are needed.
