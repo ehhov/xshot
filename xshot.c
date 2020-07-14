@@ -218,8 +218,8 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
 						oldi = i;
 					}
 
-					*x = ev.xbutton.x_root;
-					*y = ev.xbutton.y_root;
+					*x = ev.xmotion.x_root;
+					*y = ev.xmotion.y_root;
 
 					if (*x > xstart) {
 						*w = *x - xstart;
