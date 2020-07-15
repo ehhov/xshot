@@ -26,7 +26,7 @@ finsignal(int signal)
 void
 usage(FILE *output)
 {
-	fprintf(output, "Usage: %s [-br] [-a|-m[a]|-s[tf]] [-d <delay(ms)>] [--tty] [-h]\n", cmd);
+	fprintf(output, "Usage: %s [-br] [-a|-m[a]|-s[tf]] [-d delay(ms)] [--tty] [-h] [output.png]\n", cmd);
 }
 
 void
