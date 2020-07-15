@@ -353,6 +353,11 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+	if (argc > 1) {
+		fprintf(stderr, "Too many arguments.\n");
+		usage(stderr);
+		return 1;
+	}
 
 	/* special options behavior */
 	if (twoflag && !sflag)
