@@ -132,17 +132,6 @@ excludeborders(Display *dpy, Window *win)
 }
 
 int
-whichmon(XRRMonitorInfo *m, int n, int x, int y)
-{
-	int i;
-	for (i = 0; i < n; i++)
-		if (x >= m[i].x && x < m[i].x + m[i].width \
-		    && y >= m[i].y && y < m[i].y + m[i].height)
-			return i;
-	return -1;
-}
-
-int
 region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
 {
 	XEvent ev;
@@ -268,14 +257,72 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
 }
 
 int
+whichmon(XRRMonitorInfo *m, int n, int x, int y)
+{
+	int i;
+	for (i = 0; i < n; i++)
+		if (x >= m[i].x && x < m[i].x + m[i].width \
+		    && y >= m[i].y && y < m[i].y + m[i].height)
+			return i;
+	return -1;
+}
+
+void
+monitor(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int *mflag)
+{
+	Window active;
+	XWindowAttributes attr;
+	XRRMonitorInfo *mons;
+	int nmons, i, j;
+
+	mons = XRRGetMonitors(dpy, DefaultRootWindow(dpy), True, &nmons);
+	if (nmons == -1) {
+		fprintf(stderr, "XRandr failed to get monitors." \
+		                " Capturing all of them.\n");
+		*win = DefaultRootWindow(dpy);
+		*mflag = 0;
+		return;
+	}
+
+	if (*mflag == 2) {
+		XGetInputFocus(dpy, &active, &(int){0});
+		XGetWindowAttributes(dpy, active, &attr);
+		j = 0;
+		do {
+			i = whichmon(mons, nmons, attr.x + attr.width * (j & 1), \
+			             attr.y + attr.height * ((j/2) & 1));
+			j++;
+			if (j > 4)
+				break;
+		} while (i < 0 && !finish);
+	} else {
+		XQueryPointer(dpy, DefaultRootWindow(dpy), &(Window){0}, \
+		              &(Window){0}, x, y, &(int){0}, \
+		              &(int){0}, &(unsigned int){0});
+		i = whichmon(mons, nmons, *x, *y);
+	}
+	if (i < 0 || i >= nmons) {
+		fprintf(stderr, "Failed to locate the monitor." \
+		                " Capturing all of them.\n");
+		*win = DefaultRootWindow(dpy);
+		*mflag = 0;
+	} else {
+		*x = mons[i].x;
+		*y = mons[i].y;
+		*w = mons[i].width;
+		*h = mons[i].height;
+	}
+	XRRFreeMonitors(mons);
+}
+
+int
 main(int argc, char *argv[])
 {
 	XImage *img;
 	Display *dpy;
 	Window win;
 	XWindowAttributes attr;
-	XRRMonitorInfo *mons;
-	int nmons, i, j, x, y, w, h;
+	int x, y, w, h;
 	int rflag = 0, aflag = 0, sflag = 0, freeze = 1, \
 	    twoflag = 0, borders = 1, ttyflag = 0, mflag = 0;
 	struct timespec delay = {0, 0};
@@ -407,40 +454,7 @@ main(int argc, char *argv[])
 		if (sflag == -1)
 			goto ungrab;
 	} else if (mflag) {
-		mons = XRRGetMonitors(dpy, DefaultRootWindow(dpy), True, &nmons);
-		if (nmons == -1) {
-			fprintf(stderr, "XRandr failed to get monitors.\n");
-			goto ungrab;
-		}
-		if (mflag == 2) {
-			XGetInputFocus(dpy, &win, &(int){0});
-			XGetWindowAttributes(dpy, win, &attr);
-			j = 0;
-			do {
-				i = whichmon(mons, nmons, attr.x + attr.width * (j & 1), \
-				             attr.y + attr.height * ((j/2) & 1));
-				j++;
-				if (j > 4)
-					break;
-			} while (i < 0 && !finish);
-		} else {
-			XQueryPointer(dpy, DefaultRootWindow(dpy), &(Window){0}, \
-			              &(Window){0}, &x, &y, &(int){0}, \
-			              &(int){0}, &(unsigned int){0});
-			i = whichmon(mons, nmons, x, y);
-		}
-		if (i < 0 || i >= nmons) {
-			fprintf(stderr, "Failed to locate the monitor." \
-			                " Capturing all of them.\n");
-			win = DefaultRootWindow(dpy);
-			mflag = 0;
-		} else {
-			x = mons[i].x;
-			y = mons[i].y;
-			w = mons[i].width;
-			h = mons[i].height;
-		}
-		XRRFreeMonitors(mons);
+		monitor(dpy, &win, &x, &y, &w, &h, &mflag);
 	} else {
 		win = DefaultRootWindow(dpy);
 	}
