@@ -26,7 +26,7 @@ finsignal(int signal)
 void
 usage(FILE *output)
 {
-	fprintf(output, "Usage: %s [-br] [-a|-m[a]|-s[tf]] [-d delay(ms)] [--tty] [-h] [output.png]\n", cmd);
+	fprintf(output, "Usage: %s [-br] [-a|-m[a]|-s[tlf]] [-d delay(ms)] [--tty] [-h] [output.png]\n", cmd);
 }
 
 void
@@ -132,14 +132,14 @@ excludeborders(Display *dpy, Window *win)
 }
 
 int
-region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
+region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, int lines)
 {
 	XEvent ev;
 	GC gc;
 	XGCValues gcval;
 	Cursor cursor, cursorangles[4];
 	int done = 0, pressed = 0, i = 0, oldi = -1;
-	int xstart = 0, ystart = 0;
+	int xstart = 0, ystart = 0, rw = 0, rh = 0;
 	int fd = ConnectionNumber(dpy);
 	fd_set fds;
 
@@ -170,6 +170,16 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
 	gc = XCreateGC(dpy, *win, GCFunction | GCForeground | GCBackground \
 	                          | GCSubwindowMode | GCLineWidth, &gcval);
 
+	if (lines) {
+		rw = WidthOfScreen(DefaultScreenOfDisplay(dpy));
+		rh = HeightOfScreen(DefaultScreenOfDisplay(dpy));
+		XQueryPointer(dpy, *win, &(Window){0}, &(Window){0}, x, y, \
+		              &(int){0}, &(int){0}, &(unsigned int){0});
+		XDrawLine(dpy, *win, gc, *x, 0, *x, rh);
+		XDrawLine(dpy, *win, gc, 0, *y, rw, *y);
+		XFlush(dpy);
+	}
+
 	while (!done && !finish) {
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
@@ -180,6 +190,11 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
 			case ButtonPress:
 				/* this if() is necessary for twoclick */
 				if (!pressed) {
+					if (lines) {
+						XDrawLine(dpy, *win, gc, *x, 0, *x, rh);
+						XDrawLine(dpy, *win, gc, 0, *y, rw, *y);
+						XFlush(dpy);
+					}
 					*x = xstart = ev.xbutton.x_root;
 					*y = ystart = ev.xbutton.y_root;
 					*w = *h = 0;
@@ -229,6 +244,16 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick)
 
 					/* Draw Rectangle */
 					XDrawRectangle(dpy, *win, gc, *x, *y, *w, *h);
+					XFlush(dpy);
+				} else if (lines) {
+					XDrawLine(dpy, *win, gc, *x, 0, *x, rh);
+					XDrawLine(dpy, *win, gc, 0, *y, rw, *y);
+
+					*x = ev.xmotion.x_root;
+					*y = ev.xmotion.y_root;
+
+					XDrawLine(dpy, *win, gc, *x, 0, *x, rh);
+					XDrawLine(dpy, *win, gc, 0, *y, rw, *y);
 					XFlush(dpy);
 				}
 				break;
@@ -323,7 +348,7 @@ main(int argc, char *argv[])
 	Window win;
 	XWindowAttributes attr;
 	int x, y, w, h;
-	int rflag = 0, aflag = 0, sflag = 0, freeze = 1, \
+	int rflag = 0, aflag = 0, sflag = 0, freeze = 1, lflag = 0, \
 	    twoflag = 0, borders = 1, ttyflag = 0, mflag = 0;
 	struct timespec delay = {0, 0};
 	FILE *file;
@@ -370,6 +395,9 @@ main(int argc, char *argv[])
 			case 'b':
 				/* don't include window borders and decorations */
 				borders = 0;
+				break;
+			case 'l':
+				lflag = 1;
 				break;
 			case 'd':
 				/* delay before the shot in milliseconds */
@@ -424,6 +452,8 @@ main(int argc, char *argv[])
 		return 1;
 	} else if (mflag && !borders) {
 		fprintf(stderr, "Note: -b is useless with -m.\n");
+	} else if (lflag && !sflag) {
+		fprintf(stderr, "Note: -l is useless without -s (or -t).\n");
 	}
 
 	/* unset useless and dangerous options */
@@ -450,7 +480,7 @@ main(int argc, char *argv[])
 	if (aflag) {
 		XGetInputFocus(dpy, &win, &(int){0});
 	} else if (sflag) {
-		sflag = region(dpy, &win, &x, &y, &w, &h, twoflag);
+		sflag = region(dpy, &win, &x, &y, &w, &h, twoflag, lflag);
 		if (sflag == -1)
 			goto ungrab;
 	} else if (mflag) {

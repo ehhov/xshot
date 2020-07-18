@@ -4,7 +4,7 @@ xshot \- a simple screenshot utility for X
 .SH SYNOPSIS
 .B xshot
 .RB [ \-br ]
-.RB [ \-a | \-m [ a ]| \-s [ tf ]]
+.RB [ \-a | \-m [ a ]| \-s [ tlf ]]
 .RB [ \-d
 .IR delay ]
 .RB [ \-\-tty ]
@@ -67,6 +67,10 @@ option).
 .TP
 .B \-b
 capture only client contents, exclude all borders and decorations.
+.TP
+.B \-l
+draw lines indicating cursor coordinates during selection before the first 
+button press.
 .TP
 .BI \-d " delay"
 wait for
