@@ -1,1 +1,6 @@
 Add an option to capture the pointer.
+
+When a compositor is busy refreshing the screen, and xshot is started 
+with -sl, the lines are caught by the compositor and appear on the 
+image. XSync(dpy, False) after XGrabServer() and/or before drawing 
+lines doesn't help.
