@@ -11,6 +11,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include <X11/keysym.h>
 #include <X11/extensions/Xrandr.h>
 #include <png.h>
 
@@ -20,7 +21,7 @@ const char *cmd;
 void
 finsignal(int signal)
 {
-	finish = 1;
+	finish = -1;
 }
 
 void
@@ -131,6 +132,34 @@ excludeborders(Display *dpy, Window *win)
 	*win = stripped;
 }
 
+void
+grabkey(Display *dpy, KeyCode key, unsigned int mod)
+{
+	static unsigned int numlockmask = 0;
+
+	if (!numlockmask) {
+		unsigned int i, j;
+		XModifierKeymap *modmap;
+
+		modmap = XGetModifierMapping(dpy);
+		for (i = 0; i < 8; i++)
+			for (j = 0; j < modmap->max_keypermod; j++)
+				if (modmap->modifiermap[i * modmap->max_keypermod + j] \
+				    == XKeysymToKeycode(dpy, XK_Num_Lock))
+					numlockmask = (1 << i);
+		XFreeModifiermap(modmap);
+	}
+
+	XGrabKey(dpy, key, mod, DefaultRootWindow(dpy), \
+	         False, GrabModeAsync, GrabModeAsync);
+	XGrabKey(dpy, key, mod | LockMask, DefaultRootWindow(dpy), \
+	         False, GrabModeAsync, GrabModeAsync);
+	XGrabKey(dpy, key, mod | numlockmask, DefaultRootWindow(dpy), \
+	         False, GrabModeAsync, GrabModeAsync);
+	XGrabKey(dpy, key, mod | numlockmask | LockMask, DefaultRootWindow(dpy), \
+	         False, GrabModeAsync, GrabModeAsync);
+}
+
 int
 region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, int lines)
 {
@@ -169,6 +198,10 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 	gcval.line_width = 1;
 	gc = XCreateGC(dpy, *win, GCFunction | GCForeground | GCBackground \
 	                          | GCSubwindowMode | GCLineWidth, &gcval);
+
+	grabkey(dpy, XKeysymToKeycode(dpy, XK_q), 0);
+	grabkey(dpy, XKeysymToKeycode(dpy, XK_Escape), 0);
+	XFlush(dpy); /* needed because the server is probably grabbed */
 
 	if (lines) {
 		rw = WidthOfScreen(DefaultScreenOfDisplay(dpy));
@@ -257,6 +290,9 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 					XFlush(dpy);
 				}
 				break;
+			case KeyPress:
+				done = finish = 1;
+				break;
 			default:
 				break;
 			}
@@ -269,6 +305,7 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 		XFlush(dpy);
 	}
 	
+	XUngrabKey(dpy, AnyKey, AnyModifier, DefaultRootWindow(dpy));
 	XUngrabPointer(dpy, CurrentTime);
 	XFreeCursor(dpy, cursor);
 	XFreeCursor(dpy, cursorangles[0]);
@@ -559,7 +596,7 @@ ungrab:
 		XUngrabServer(dpy);
 	XCloseDisplay(dpy);
 end:
-	if (finish)
+	if (finish == -1)
 		fprintf(stderr, "Signal received, finishing.\n");
 	return 1;
 }
