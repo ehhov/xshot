@@ -213,6 +213,7 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 		XFlush(dpy);
 	}
 
+	*w = *h = 0;
 	while (!done && !finish) {
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
@@ -230,7 +231,6 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 					}
 					*x = xstart = ev.xbutton.x_root;
 					*y = ystart = ev.xbutton.y_root;
-					*w = *h = 0;
 					pressed = 1;
 				}
 				break;
@@ -299,11 +299,14 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 		}
 	}
 
-	/* remove the rectangle to take the shot */
-	if (*w != 0 && !finish) {
+	/* remove everyting to take the shot */
+	if (*w != 0) {
 		XDrawRectangle(dpy, *win, gc, *x, *y, *w, *h);
-		XFlush(dpy);
+	} else if (!pressed && lines) {
+		XDrawLine(dpy, *win, gc, *x, 0, *x, rh);
+		XDrawLine(dpy, *win, gc, 0, *y, rw, *y);
 	}
+	XFlush(dpy);
 	
 	XUngrabKey(dpy, AnyKey, AnyModifier, DefaultRootWindow(dpy));
 	XUngrabPointer(dpy, CurrentTime);
