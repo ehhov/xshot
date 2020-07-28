@@ -462,7 +462,7 @@ main(int argc, char *argv[])
 					usage(stderr);
 					return 1;
 				}
-				delay.tv_nsec = 1e9 * (delay.tv_sec % 1000);
+				delay.tv_nsec = 1e6 * (delay.tv_sec % 1000);
 				delay.tv_sec = delay.tv_sec / 1000;
 				break;
 			case 'h':
