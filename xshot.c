@@ -391,11 +391,21 @@ main(int argc, char *argv[])
 	int rflag = 0, aflag = 0, sflag = 0, freeze = 1, lflag = 0, \
 	    twoflag = 0, borders = 1, ttyflag = 0, mflag = 0;
 	struct timespec delay = {0, 0};
-	FILE *file;
+	char *filename = NULL;
+	FILE *file = NULL;
 	struct sigaction action;
 
 	cmd = argv[0];
-	for (argc--, argv++; argv[0] && argv[0][0] == '-' && argv[0][1]; argc--, argv++) {
+	for (argc--, argv++; argv[0]; argc--, argv++) {
+		if (argv[0][0] != '-') {
+			if (filename) {
+				fprintf(stderr, "Only one output file is allowed.\n");
+				usage(stderr);
+				return 1;
+			}
+			filename = argv[0];
+			continue;
+		}
 		if (!strcmp(argv[0], "--tty")) {
 			/* don't suppress output if it is a tty */
 			ttyflag = 1;
@@ -468,9 +478,8 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	if (argc > 1) {
-		fprintf(stderr, "Too many arguments.\n");
-		usage(stderr);
+	if (filename && !(file = fopen(filename, "w"))) {
+		fprintf(stderr, "Cannot open file %s.\n", argv[0]);
 		return 1;
 	}
 
@@ -573,13 +582,7 @@ main(int argc, char *argv[])
 	}
 
 	/* print the image to the standard output or to the specified file */
-	if (argc > 0) {
-		file = fopen(argv[0], "w");
-		if (file == NULL) {
-			fprintf(stderr, "Cannot open file %s.\n", argv[0]);
-			XDestroyImage(img);
-			return 1;
-		}
+	if (file) {
 		printximg(img, file);
 		fclose(file);
 	} else {
