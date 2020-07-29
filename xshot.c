@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/select.h>
+#include <poll.h>
 #include <time.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -169,8 +169,7 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 	Cursor cursor, cursorangles[4];
 	int done = 0, pressed = 0, i = 0, oldi = -1;
 	int xstart = 0, ystart = 0, rw = 0, rh = 0;
-	int fd = ConnectionNumber(dpy);
-	fd_set fds;
+	struct pollfd fds[1];
 
 	*win = DefaultRootWindow(dpy);
 
@@ -213,11 +212,11 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 		XFlush(dpy);
 	}
 
+	fds[0].fd = ConnectionNumber(dpy);
+	fds[0].events = POLLIN;
 	*w = *h = 0;
 	while (!done && !finish) {
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
-		select(fd + 1, &fds, NULL, NULL, NULL);
+		poll(fds, 1, -1);
 		while (XPending(dpy) && !finish) {
 			XNextEvent(dpy, &ev);
 			switch (ev.type) {
