@@ -18,4 +18,11 @@ This program is based on a few projects:
 
 Requirements
 ------------
-To build this program, Xlib and Xrandr libraries are needed.
+To build this program, the Xlib and Xrandr libraries are needed.
+
+
+Installation
+------------
+Edit the first lines of Makefile to fit your system and run
+
+    make install
