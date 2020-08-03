@@ -179,7 +179,7 @@ region(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int twoclick, 
 	                 | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, \
 	                 *win, cursor, CurrentTime) \
 	    != GrabSuccess) {
-		fprintf(stderr, "Failed to grab pointer.\n");
+		fputs("Failed to grab pointer.\n", stderr);
 		XFreeCursor(dpy, cursor);
 		return -1;
 	}
@@ -341,8 +341,7 @@ monitor(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int *mflag)
 
 	mons = XRRGetMonitors(dpy, DefaultRootWindow(dpy), True, &nmons);
 	if (nmons == -1) {
-		fprintf(stderr, "XRandr failed to get monitors." \
-		                " Capturing all of them.\n");
+		fputs("XRandr failed to get monitors. Capturing all of them.\n", stderr);
 		*win = DefaultRootWindow(dpy);
 		*mflag = 0;
 		return;
@@ -366,8 +365,7 @@ monitor(Display *dpy, Window *win, int *x, int *y, int *w, int *h, int *mflag)
 		i = whichmon(mons, nmons, *x, *y);
 	}
 	if (i < 0 || i >= nmons) {
-		fprintf(stderr, "Failed to locate the monitor." \
-		                " Capturing all of them.\n");
+		fputs("Failed to locate monitor. Capturing all of them.\n", stderr);
 		*win = DefaultRootWindow(dpy);
 		*mflag = 0;
 	} else {
@@ -398,7 +396,7 @@ main(int argc, char *argv[])
 	for (argc--, argv++; argv[0]; argc--, argv++) {
 		if (argv[0][0] != '-') {
 			if (filename) {
-				fprintf(stderr, "Only one output file is allowed.\n");
+				fputs("Only one output file is allowed.\n", stderr);
 				usage(stderr);
 				return 1;
 			}
@@ -457,7 +455,7 @@ main(int argc, char *argv[])
 					argc--; argv++;
 					delay.tv_sec = strtol(argv[0], NULL, 0);
 				} else {
-					fprintf(stderr, "-d flag needs an argument.\n");
+					fputs("-d flag needs an argument.\n", stderr);
 					usage(stderr);
 					return 1;
 				}
@@ -491,17 +489,17 @@ main(int argc, char *argv[])
 	}
 
 	if (aflag && sflag) {
-		fprintf(stderr, "Incompatible options -a and -s (or -t).\n");
+		fputs("Incompatible options -a and -s (or -t).\n", stderr);
 		usage(stderr);
 		return 1;
 	} else if (mflag && sflag) {
-		fprintf(stderr, "Incompatible options -m and -s (or -t).\n");
+		fputs("Incompatible options -m and -s (or -t).\n", stderr);
 		usage(stderr);
 		return 1;
 	} else if (mflag && !borders) {
-		fprintf(stderr, "Note: -b is useless with -m.\n");
+		fputs("Note: -b is useless with -m.\n", stderr);
 	} else if (lflag && !sflag) {
-		fprintf(stderr, "Note: -l is useless without -s (or -t).\n");
+		fputs("Note: -l is useless without -s (or -t).\n", stderr);
 	}
 
 	/* unset useless and dangerous options */
@@ -517,7 +515,7 @@ main(int argc, char *argv[])
 
 	dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {
-		fprintf(stderr, "Failed to open display.\n");
+		fputs("Failed to open display.\n", stderr);
 		return 1;
 	}
 
@@ -571,7 +569,7 @@ main(int argc, char *argv[])
 
 
 	if (!img) {
-		fprintf(stderr, "Failed to get image.\n");
+		fputs("Failed to get image.\n", stderr);
 		return 1;
 	}
 
@@ -588,8 +586,8 @@ main(int argc, char *argv[])
 		if (ttyflag || !isatty(STDOUT_FILENO))
 			printximg(img, stdout);
 		else
-			fprintf(stderr, "Not printing the image to a tty.\n" \
-			        "If you actually need it, run with the --tty option.\n");
+			fputs("Not printing the image to a tty. If you actually" \
+			      " need it, run with the --tty option.\n", stderr);
 	}
 
 	XDestroyImage(img);
@@ -602,6 +600,6 @@ ungrab:
 	XCloseDisplay(dpy);
 end:
 	if (finish == -1)
-		fprintf(stderr, "Signal received, finishing.\n");
+		fputs("Signal received, finishing.\n", stderr);
 	return 1;
 }
