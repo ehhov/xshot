@@ -444,6 +444,7 @@ main(int argc, char *argv[])
 				borders = 0;
 				break;
 			case 'l':
+				/* draw lines in selection mode before the first click */
 				lflag = 1;
 				break;
 			case 'd':
