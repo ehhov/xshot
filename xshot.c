@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 	    twoflag = 0, borders = 1, ttyflag = 0, mflag = 0;
 	struct timespec delay = {0, 0};
 	char *filename = NULL;
-	FILE *file = NULL;
+	FILE *file;
 	struct sigaction action;
 
 	cmd = argv[0];
@@ -475,10 +475,6 @@ main(int argc, char *argv[])
 				break;
 			}
 		}
-	}
-	if (filename && !(file = fopen(filename, "w"))) {
-		fprintf(stderr, "Cannot open file %s.\n", argv[0]);
-		return 1;
 	}
 
 	/* special options behavior */
@@ -568,7 +564,6 @@ main(int argc, char *argv[])
 	XUngrabServer(dpy);
 	XCloseDisplay(dpy);
 
-
 	if (!img) {
 		fputs("Failed to get image.\n", stderr);
 		return 1;
@@ -580,7 +575,12 @@ main(int argc, char *argv[])
 	}
 
 	/* print the image to the standard output or to the specified file */
-	if (file) {
+	if (filename) {
+		if (!(file = fopen(filename, "w"))) {
+			fprintf(stderr, "Cannot open file %s. Image lost.\n", filename);
+			XDestroyImage(img);
+			return 1;
+		}
 		printximg(img, file);
 		fclose(file);
 	} else {
